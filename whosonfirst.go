@@ -72,6 +72,13 @@ func NewCatalog(ctx context.Context, uri string) (lookup.Catalog, error) {
 		opts, opts_err = DefaultFingerprintCatalogOptions()
 	case "imagehash":
 		opts, opts_err = DefaultImageHashCatalogOptions()
+	case "media":
+		opts, opts_err = DefaultFingerprintCatalogOptions()
+
+		if opts_err == nil {
+			opts.AppendFuncs = append(opts.AppendFuncs, AppendImageHashFunc)
+		}
+		
 	default:
 		return nil, errors.New("Unsupported lookup")
 	}
