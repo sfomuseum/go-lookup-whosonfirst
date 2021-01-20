@@ -9,9 +9,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/sfomuseum/go-lookup"
-	"github.com/sfomuseum/go-lookup-blob"
-	"github.com/sfomuseum/go-lookup-git"
-	"github.com/sfomuseum/go-lookup/catalog"
+	_ "github.com/sfomuseum/go-lookup-blob"
+	_ "github.com/sfomuseum/go-lookup-git"
 	"github.com/tidwall/pretty"
 	"net/url"
 )
@@ -24,7 +23,9 @@ type CatalogOptions struct {
 
 func DefaultCatalogOptions() (*CatalogOptions, error) {
 
-	c, err := catalog.NewSyncMapCatalog()
+	ctx := context.Background()
+
+	c, err := lookup.NewCatalog(ctx, "syncmap://")
 
 	if err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func NewCatalog(ctx context.Context, uri string) (lookup.Catalog, error) {
 		if opts_err == nil {
 			opts.AppendFuncs = append(opts.AppendFuncs, AppendImageHashFunc)
 		}
-		
+
 	default:
 		return nil, errors.New("Unsupported lookup")
 	}
@@ -87,21 +88,10 @@ func NewCatalog(ctx context.Context, uri string) (lookup.Catalog, error) {
 		return nil, opts_err
 	}
 
-	var lu lookup.LookerUpper
-
-	switch u.Host {
-	case "blob":
-		lu = blob.NewBlobLookerUpper(ctx)
-	case "git":
-		lu = git.NewGitLookerUpper(ctx)
-	default:
-		return nil, errors.New("Unsupported looker upper")
-	}
-
 	q := u.Query()
 	lu_uri := q.Get("uri")
 
-	err = lu.Open(ctx, lu_uri)
+	lu, err := lookup.NewLookerUpper(ctx, lu_uri)
 
 	if err != nil {
 		return nil, err
@@ -141,4 +131,3 @@ func MarshalCatalog(c lookup.Catalog) ([]byte, error) {
 	body = pretty.Pretty(body)
 	return body, nil
 }
-
