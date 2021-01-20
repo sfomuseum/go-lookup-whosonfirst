@@ -138,12 +138,17 @@ type Attributes struct {
 	// "foo" and "FOO"), only one value will be kept, and it is undefined
 	// which one.
 	Metadata map[string]string
+	// CreateTime is the time the blob object was created. If not available,
+	// leave as the zero time.
+	CreateTime time.Time
 	// ModTime is the time the blob object was last modified.
 	ModTime time.Time
 	// Size is the size of the object in bytes.
 	Size int64
 	// MD5 is an MD5 hash of the blob contents or nil if not available.
 	MD5 []byte
+	// ETag for the blob; see https://en.wikipedia.org/wiki/HTTP_ETag.
+	ETag string
 	// AsFunc allows drivers to expose driver-specific types;
 	// see Bucket.As for more details.
 	// If not set, no driver-specific types are supported.
@@ -306,9 +311,36 @@ type Bucket interface {
 type SignedURLOptions struct {
 	// Expiry sets how long the returned URL is valid for. It is guaranteed to be > 0.
 	Expiry time.Duration
+
 	// Method is the HTTP method that can be used on the URL; one of "GET", "PUT",
 	// or "DELETE". Drivers must implement all 3.
 	Method string
+
+	// ContentType specifies the Content-Type HTTP header the user agent is
+	// permitted to use in the PUT request. It must match exactly. See
+	// EnforceAbsentContentType for behavior when ContentType is the empty string.
+	// If this field is not empty and the bucket cannot enforce the Content-Type
+	// header, it must return an Unimplemented error.
+	//
+	// This field will not be set for any non-PUT requests.
+	ContentType string
+
+	// If EnforceAbsentContentType is true and ContentType is the empty string,
+	// then PUTing to the signed URL must fail if the Content-Type header is
+	// present or the implementation must return an error if it cannot enforce
+	// this. If EnforceAbsentContentType is false and ContentType is the empty
+	// string, implementations should validate the Content-Type header if possible.
+	// If EnforceAbsentContentType is true and the bucket cannot enforce the
+	// Content-Type header, it must return an Unimplemented error.
+	//
+	// This field will always be false for non-PUT requests.
+	EnforceAbsentContentType bool
+
+	// BeforeSign is a callback that will be called before each call to the
+	// the underlying service's sign functionality.
+	// asFunc converts its argument to driver-specific types.
+	// See https://gocloud.dev/concepts/as/ for background information.
+	BeforeSign func(asFunc func(interface{}) bool) error
 }
 
 // prefixedBucket implements Bucket by prepending prefix to all keys.

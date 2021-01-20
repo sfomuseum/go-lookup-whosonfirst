@@ -1,9 +1,10 @@
 package catalog
 
 import (
+	"context"
+	"github.com/sfomuseum/go-lookup"
 	"sync"
 	"sync/atomic"
-	"github.com/sfomuseum/go-lookup"
 )
 
 type SyncMapCatalog struct {
@@ -11,7 +12,17 @@ type SyncMapCatalog struct {
 	catalog *sync.Map
 }
 
-func NewSyncMapCatalog() (lookup.Catalog, error) {
+func init() {
+
+	ctx := context.Background()
+	err := lookup.RegisterCatalog(ctx, "syncmap", NewSyncMapCatalog)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func NewSyncMapCatalog(ctx context.Context, uri string) (lookup.Catalog, error) {
 
 	catalog := new(sync.Map)
 
