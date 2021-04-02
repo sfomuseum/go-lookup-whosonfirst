@@ -24,10 +24,19 @@ type GitLookerUpper struct {
 func init() {
 
 	ctx := context.Background()
-	err := lookup.RegisterLookerUpper(ctx, "git", NewGitLookerUpper)
 
-	if err != nil {
-		panic(err)
+	schemes := []string{
+		"git",
+		"https",
+	}
+
+	for _, s := range schemes {
+		
+		err := lookup.RegisterLookerUpper(ctx, s, NewGitLookerUpper)
+		
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
