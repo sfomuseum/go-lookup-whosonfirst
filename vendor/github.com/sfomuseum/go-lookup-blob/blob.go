@@ -3,7 +3,8 @@ package blob
 import (
 	"bytes"
 	"context"
-	"github.com/sfomuseum/go-lookup"
+	"github.com/sfomuseum/go-lookup/catalog"
+	"github.com/sfomuseum/go-lookup/iterator"
 	gc_blob "gocloud.dev/blob"
 	"io"
 	"io/ioutil"
@@ -11,31 +12,31 @@ import (
 	"path/filepath"
 )
 
-type BlobLookerUpper struct {
-	lookup.LookerUpper
+type BlobIterator struct {
+	iterator.Iterator
 	bucket *gc_blob.Bucket
 }
 
 func init() {
 
 	ctx := context.Background()
-	err := lookup.RegisterLookerUpper(ctx, "blob", NewBlobLookerUpper)
+	err := iterator.RegisterIterator(ctx, "blob", NewBlobIterator)
 
 	if err != nil {
 		panic(err)
 	}
 }
 
-func NewBlobLookerUpperWithBucket(ctx context.Context, bucket *gc_blob.Bucket) lookup.LookerUpper {
+func NewBlobIteratorWithBucket(ctx context.Context, bucket *gc_blob.Bucket) iterator.Iterator {
 
-	l := &BlobLookerUpper{
+	l := &BlobIterator{
 		bucket: bucket,
 	}
 
 	return l
 }
 
-func NewBlobLookerUpper(ctx context.Context, uri string) (lookup.LookerUpper, error) {
+func NewBlobIterator(ctx context.Context, uri string) (iterator.Iterator, error) {
 
 	bucket, err := gc_blob.OpenBucket(ctx, uri)
 
@@ -43,14 +44,14 @@ func NewBlobLookerUpper(ctx context.Context, uri string) (lookup.LookerUpper, er
 		return nil, err
 	}
 
-	l := &BlobLookerUpper{
+	l := &BlobIterator{
 		bucket: bucket,
 	}
 
 	return l, nil
 }
 
-func (l *BlobLookerUpper) Append(ctx context.Context, lu lookup.Catalog, append_funcs ...lookup.AppendLookupFunc) error {
+func (l *BlobIterator) Append(ctx context.Context, lu catalog.Catalog, append_funcs ...iterator.AppendLookupFunc) error {
 
 	bucket_iter := l.bucket.List(nil)
 

@@ -2,9 +2,12 @@ package lookup
 
 import (
 	"context"
+	"github.com/sfomuseum/go-lookup/catalog"
+	"github.com/sfomuseum/go-lookup/iterator"
 )
 
-func SeedCatalog(ctx context.Context, c Catalog, looker_uppers []LookerUpper, append_funcs []AppendLookupFunc) error {
+// Seed a Catalog instance with one or more Iterator instances. Catalogs are seeded according to rules defined in the list of AppendLookupFunc functions that are passed in to the method.
+func SeedCatalog(ctx context.Context, c catalog.Catalog, iters []iterator.Iterator, append_funcs []iterator.AppendLookupFunc) error {
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -12,13 +15,13 @@ func SeedCatalog(ctx context.Context, c Catalog, looker_uppers []LookerUpper, ap
 	done_ch := make(chan bool)
 	err_ch := make(chan error)
 
-	remaining := len(looker_uppers)
+	remaining := len(iters)
 
-	for _, l := range looker_uppers {
+	for _, i := range iters {
 
-		go func(l LookerUpper) {
+		go func(l iterator.Iterator) {
 
-			err := l.Append(ctx, c, append_funcs...)
+			err := i.Append(ctx, c, append_funcs...)
 
 			if err != nil {
 				err_ch <- err
@@ -26,7 +29,7 @@ func SeedCatalog(ctx context.Context, c Catalog, looker_uppers []LookerUpper, ap
 
 			done_ch <- true
 
-		}(l)
+		}(i)
 	}
 
 	for remaining > 0 {

@@ -3,11 +3,12 @@ package git
 import (
 	"bytes"
 	"context"
-	"github.com/sfomuseum/go-lookup"
-	gogit "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	"gopkg.in/src-d/go-git.v4/storage/memory"
+	gogit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/storage/memory"
+	"github.com/sfomuseum/go-lookup/catalog"
+	"github.com/sfomuseum/go-lookup/iterator"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -15,8 +16,8 @@ import (
 
 const DEFAULT_BRANCH string = "main"
 
-type GitLookerUpper struct {
-	lookup.LookerUpper
+type GitIterator struct {
+	iterator.Iterator
 	uri string
 	ref plumbing.ReferenceName
 }
@@ -31,16 +32,16 @@ func init() {
 	}
 
 	for _, s := range schemes {
-		
-		err := lookup.RegisterLookerUpper(ctx, s, NewGitLookerUpper)
-		
+
+		err := iterator.RegisterIterator(ctx, s, NewGitIterator)
+
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-func NewGitLookerUpper(ctx context.Context, uri string) (lookup.LookerUpper, error) {
+func NewGitIterator(ctx context.Context, uri string) (iterator.Iterator, error) {
 
 	u, err := url.Parse(uri)
 
@@ -58,7 +59,7 @@ func NewGitLookerUpper(ctx context.Context, uri string) (lookup.LookerUpper, err
 		ref = plumbing.NewBranchReferenceName(branch)
 	}
 
-	l := &GitLookerUpper{
+	l := &GitIterator{
 		uri: uri,
 		ref: ref,
 	}
@@ -66,7 +67,7 @@ func NewGitLookerUpper(ctx context.Context, uri string) (lookup.LookerUpper, err
 	return l, nil
 }
 
-func (l *GitLookerUpper) Append(ctx context.Context, lu lookup.Catalog, append_funcs ...lookup.AppendLookupFunc) error {
+func (l *GitIterator) Append(ctx context.Context, lu catalog.Catalog, append_funcs ...iterator.AppendLookupFunc) error {
 
 	r, err := gogit.Clone(memory.NewStorage(), nil, &gogit.CloneOptions{
 		URL:   l.uri,

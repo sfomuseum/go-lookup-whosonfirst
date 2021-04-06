@@ -1,8 +1,8 @@
 module github.com/sfomuseum/go-lookup-git
 
-go 1.12
+go 1.16
 
 require (
-	github.com/sfomuseum/go-lookup v0.0.1
-	gopkg.in/src-d/go-git.v4 v4.13.1
+	github.com/go-git/go-git/v5 v5.3.0
+	github.com/sfomuseum/go-lookup v0.0.2
 )

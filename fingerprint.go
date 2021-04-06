@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/sfomuseum/go-lookup"
+	"github.com/sfomuseum/go-lookup/catalog"
 	"github.com/tidwall/gjson"
 	"io"
 	"io/ioutil"
@@ -24,7 +24,7 @@ func DefaultFingerprintCatalogOptions() (*CatalogOptions, error) {
 	return opts, nil
 }
 
-func AppendFingerprintFunc(ctx context.Context, lu lookup.Catalog, fh io.ReadCloser) error {
+func AppendFingerprintFunc(ctx context.Context, lu catalog.Catalog, fh io.ReadCloser) error {
 
 	body, err := ioutil.ReadAll(fh)
 
